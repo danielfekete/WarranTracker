@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+// model User {
+//   email    String    @unique
+//   password String
+//   name     String?    @db.VarChar(255)
+//   id       String    @id @default(uuid()) @db.Uuid
+//   products Product[]
+// }
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String  @map("user_id") 
+  type               String
+  provider           String
+  providerAccountId  String  @map("provider_account_id")
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model User {
+  id            String    @id @default(cuid()) 
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  password      String?
+  accounts      Account[]
+  // products      Product[]
+ 
+  @@map("users")
+}
+
+// model Category {
+//   name     String    @db.VarChar(255)
+//   id       String    @id @default(uuid()) @db.Uuid
+//   products Product[]
+// }
+
+// model Document {
+//   document_url  String
+//   document_type String  @db.VarChar(255)
+//   product_id    String  @db.Uuid
+//   id            String  @id @default(uuid()) @db.Uuid
+//   product       Product @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+// }
+
+// model Product {
+//   name              String     @db.VarChar(255)
+//   brand             String     @db.VarChar(255)
+//   image_url         String
+//   purchase_location String
+//   purchase_date     DateTime   @db.Date
+//   purchase_price    Float
+//   warranty_end_date DateTime   @db.Date
+//   notes             String
+//   user_id           String     @db.Uuid
+//   category_id       String     @db.Uuid
+//   id                String     @id @default(uuid()) @db.Uuid
+//   documents         Document[]
+//   category          Category   @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+//   user              User       @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+//   reminders         Reminder[]
+// }
+
+// model Reminder {
+//   reminder_date      DateTime @db.Date
+//   reminder_frequency String   @db.VarChar(255)
+//   product_id         String   @db.Uuid
+//   id                 String   @id @default(uuid()) @db.Uuid
+//   product            Product  @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+// }
