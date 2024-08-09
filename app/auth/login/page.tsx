@@ -1,10 +1,10 @@
-import RegisterForm from "../components/register-form";
+import LoginForm from "@/app/components/auth/login-form";
 
 export default function Page() {
   return (
     <main className="flex flex-col items-center justify-between p-10">
       <div className="flex flex-col justify-center content-center max-w-[500px]">
-        <RegisterForm />
+        <LoginForm />
       </div>
     </main>
   );

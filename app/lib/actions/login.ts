@@ -1,15 +1,18 @@
 "use server";
+import { getUserByEmail } from "@/app/data/user";
 import { loginSchema } from "@/app/schemas/login";
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
+import { generateVerificationToken } from "../tokens";
+import { sendVerificationEmail } from "../mail";
 
-type State = {
+export interface LoginState {
   message?: string;
   fields?: Record<string, string>;
   issues?: string[];
-};
+}
 
-export default async function login(_: State, formData: FormData) {
+export default async function login(_: LoginState, formData: FormData) {
   // Validate the form data
   const data = Object.fromEntries(formData);
   const validatedFields = loginSchema.safeParse(data);
@@ -29,6 +32,32 @@ export default async function login(_: State, formData: FormData) {
     };
   }
 
+  const { email } = validatedFields.data;
+
+  const user = await getUserByEmail(email);
+
+  // Invalid credentials or oauth
+  if (!user || !user.email || !user.password) {
+    return {
+      message: "Invalid credentials.",
+    };
+  }
+
+  if (!user.emailVerified) {
+    // The user does not verified his email yet
+    // Generate a new verification token
+    const verificationToken = await generateVerificationToken(email);
+
+    await sendVerificationEmail(
+      verificationToken.email,
+      verificationToken.token
+    );
+
+    return {
+      message: "Confirmation email sent.",
+    };
+  }
+
   try {
     // next auth signIn
     await signIn("credentials", formData);
@@ -39,14 +68,14 @@ export default async function login(_: State, formData: FormData) {
           return {
             message: "Invalid credentials.",
             fields: {
-              email: validatedFields.data.email,
+              email,
             },
           };
         default:
           return {
             message: "An error occurred.",
             fields: {
-              email: validatedFields.data.email,
+              email,
             },
           };
       }

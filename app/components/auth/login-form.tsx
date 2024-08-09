@@ -1,11 +1,8 @@
 "use client";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Button } from "@/app/components/ui/button";
 import { useFormState } from "react-dom";
-import register from "../lib/actions/register";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { registerSchema } from "../schemas/register";
+import login, { LoginState } from "../../lib/actions/login";
 import {
   Form,
   FormControl,
@@ -13,25 +10,27 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "./ui/form";
-import FormIssues from "./form-issues";
-import FormErrorMessage from "./form-error-message";
-import { useRef } from "react";
+} from "../ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { loginSchema } from "../../schemas/login";
 import { zodResolver } from "@hookform/resolvers/zod";
+import FormErrorMessage from "./form-error-message";
+import FormIssues from "./form-issues";
+import { useRef } from "react";
 
-export default function SignUpForm() {
-  const [state, dispatch] = useFormState(register, {
+export default function LoginForm() {
+  const [state, dispatch] = useFormState<LoginState>(login, {
     message: "",
   });
 
-  const methods = useForm<z.infer<typeof registerSchema>>({
+  const methods = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: state?.fields?.email ?? "",
-      confirmPassword: "",
+      email: "",
       password: "",
+      ...(state?.fields ?? {}),
     },
-    resolver: zodResolver(registerSchema),
-    mode: "onBlur",
   });
 
   const { handleSubmit, control } = methods;
@@ -40,13 +39,13 @@ export default function SignUpForm() {
 
   return (
     <Form {...methods}>
-      {state?.message !== "" && !state.issues ? (
+      {state?.message && !state?.issues ? (
         <FormErrorMessage message={state.message} />
       ) : null}
       {state?.issues ? <FormIssues issues={state.issues} /> : null}
       <form
         ref={formRef}
-        action={dispatch}
+        noValidate
         onSubmit={(evt) => {
           evt.preventDefault();
           handleSubmit(() => {
@@ -59,7 +58,7 @@ export default function SignUpForm() {
             control={control}
             name="email"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full">
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input placeholder="" {...field} />
@@ -74,25 +73,10 @@ export default function SignUpForm() {
             control={control}
             name="password"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full">
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input placeholder="" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div>
-          <FormField
-            control={control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm password</FormLabel>
-                <FormControl>
-                  <Input placeholder="" {...field} />
+                  <Input placeholder="" type="password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

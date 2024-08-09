@@ -1,36 +1,43 @@
 "use client";
-import { Input } from "@/app/components/ui/input";
-import { Button } from "@/app/components/ui/button";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useFormState } from "react-dom";
-import login from "../lib/actions/login";
+import { Form, useForm } from "react-hook-form";
+import FormErrorMessage from "./form-error-message";
+import FormIssues from "./form-issues";
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "./ui/form";
-import { useForm } from "react-hook-form";
+} from "../ui/form";
+import { Input } from "../ui/input";
+import { newPassword, NewPasswordState } from "@/app/lib/actions/new-password";
+import { newPasswordSchema } from "@/app/schemas/new-password";
 import { z } from "zod";
-import { loginSchema } from "../schemas/login";
-import { zodResolver } from "@hookform/resolvers/zod";
-import FormErrorMessage from "./form-error-message";
-import FormIssues from "./form-issues";
 import { useRef } from "react";
+import { useSearchParams } from "next/navigation";
 
-export default function LoginForm() {
-  const [state, dispatch] = useFormState(login, {
-    message: "",
-  });
+export default function NewPasswordForm() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token") || "";
 
-  const methods = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
+  const [state, dispatch] = useFormState<NewPasswordState>(
+    newPassword.bind(null, {
+      token,
+    }),
+    {
+      message: "",
+    }
+  );
+
+  const methods = useForm<z.infer<typeof newPasswordSchema>>({
     defaultValues: {
-      email: "",
       password: "",
-      ...(state?.fields ?? {}),
+      confirmPassword: "",
     },
+    resolver: zodResolver(newPasswordSchema),
+    mode: "onBlur",
   });
 
   const { handleSubmit, control } = methods;
@@ -39,13 +46,13 @@ export default function LoginForm() {
 
   return (
     <Form {...methods}>
-      {state?.message !== "" && !state.issues ? (
+      {state?.message && !state.issues ? (
         <FormErrorMessage message={state.message} />
       ) : null}
       {state?.issues ? <FormIssues issues={state.issues} /> : null}
       <form
         ref={formRef}
-        noValidate
+        action={dispatch}
         onSubmit={(evt) => {
           evt.preventDefault();
           handleSubmit(() => {
@@ -56,12 +63,12 @@ export default function LoginForm() {
         <div>
           <FormField
             control={control}
-            name="email"
+            name="password"
             render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel>Email</FormLabel>
+              <FormItem>
+                <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input placeholder="" {...field} />
+                  <Input placeholder="" type="password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -71,12 +78,12 @@ export default function LoginForm() {
         <div>
           <FormField
             control={control}
-            name="password"
+            name="confirmPassword"
             render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel>Password</FormLabel>
+              <FormItem>
+                <FormLabel>Confirm password</FormLabel>
                 <FormControl>
-                  <Input placeholder="" {...field} />
+                  <Input placeholder="" type="password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

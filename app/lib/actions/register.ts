@@ -1,18 +1,18 @@
 "use server";
 import { registerSchema } from "@/app/schemas/register";
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
-import { redirect } from "next/navigation";
 import { db } from "../db";
 import { getUserByEmail } from "@/app/data/user";
+import { generateVerificationToken } from "../tokens";
+import { sendVerificationEmail } from "../mail";
 
-type State = {
+export interface RegisterState {
   message?: string;
   fields?: Record<string, string>;
   issues?: string[];
-};
+}
 
-export default async function register(_: State, formData: FormData) {
+export default async function register(_: RegisterState, formData: FormData) {
   // Validate the form data
   const data = Object.fromEntries(formData);
   const validatedFields = registerSchema.safeParse(data);
@@ -67,7 +67,11 @@ export default async function register(_: State, formData: FormData) {
     };
   }
 
-  // TODO: verification email token
+  const verificationToken = await generateVerificationToken(email);
 
-  redirect("/login");
+  await sendVerificationEmail(verificationToken.email, verificationToken.token);
+
+  return {
+    message: "Confirmation email sent.",
+  };
 }
